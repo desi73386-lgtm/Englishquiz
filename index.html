@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordQuest: English Master</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        },
+                        accent: {
+                            pink: '#ec4899',
+                            emerald: '#10b981',
+                            amber: '#f59e0b',
+                            cyan: '#06b6d4'
+                        }
+                    },
+                    animation: {
+                        'bounce-short': 'bounce 0.5s ease-in-out 1',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+                            '50%': { opacity: '0.85', transform: 'scale(1.02)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-8px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+            min-height: 100vh;
+            color: #f8fafc;
+        }
+
+        /* Glassmorphism Styles */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-pill {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #a5b4fc 0%, #f472b6 50%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.5);
+            border-radius: 9999px;
+        }
+
+        /* Card flip effect for speed match */
+        .match-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .match-card:hover {
+            transform: translateY(-2px) scale(1.02);
+        }
+        .match-card.selected {
+            border-color: #f59e0b;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+            background: rgba(245, 158, 11, 0.15);
+        }
+        .match-card.matched {
+            opacity: 0.3;
+            pointer-events: none;
+            transform: scale(0.95);
+        }
+
+        /* Shake Animation */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased flex flex-col justify-between min-h-screen p-3 sm:p-6 select-none">
+
+    <!-- TOP BAR / HEADER -->
+    <header class="max-w-4xl mx-auto w-full flex justify-between items-center mb-4 sm:mb-6 glass-card p-3 sm:p-4 rounded-2xl shadow-xl">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="showScreen('mode-select-screen')">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-white shadow-lg font-bold text-xl">
+                <i class="fa-solid font-display fa-graduation-cap"></i>
+            </div>
+            <div>
+                <h1 class="font-display font-extrabold text-lg sm:text-xl tracking-wide gradient-text">WordQuest</h1>
+                <p class="text-xs text-slate-400 font-medium">English Vocabulary Master</p>
+            </div>
+        </div>
+
+        <!-- Global Player Info -->
+        <div class="flex items-center gap-2 sm:gap-4">
+            <button id="sound-toggle" onclick="toggleSound()" class="glass-pill w-10 h-10 rounded-xl flex items-center justify-center text-slate-300 hover:text-white transition">
+                <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+            </button>
+            <div class="glass-pill px-3 py-1.5 rounded-xl flex items-center gap-2">
+                <i class="fa-solid fa-trophy text-amber-400 text-sm"></i>
+                <span id="global-score" class="font-bold text-sm text-slate-100">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-4xl mx-auto w-full flex-grow flex flex-col justify-center items-center relative">
+        
+        <!-- SCREEN 1: LEVEL & MODE SELECTION -->
+        <section id="mode-select-screen" class="w-full flex flex-col items-center gap-6 animate-fade-in">
+            <div class="text-center max-w-lg mb-2">
+                <span class="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-indigo-300 bg-indigo-500/20 rounded-full border border-indigo-500/30">Latih Bahasa Inggrismu</span>
+                <h2 class="text-3xl sm:text-5xl font-display font-extrabold mt-3 mb-2 text-white">Pilih Mode Game</h2>
+                <p class="text-sm sm:text-base text-slate-400">Tingkatkan kosakata, tata bahasa, dan kecepatan berfikirmu!</p>
+            </div>
+
+            <!-- Difficulty Selector -->
+            <div class="glass-card p-2 rounded-2xl flex gap-2 w-full max-w-md justify-between border border-slate-700/50">
+                <button onclick="setDifficulty('beginner')" id="diff-beginner" class="diff-btn flex-1 py-2 px-3 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-seedling mr-1"></i> Beginner
+                </button>
+                <button onclick="setDifficulty('intermediate')" id="diff-intermediate" class="diff-btn flex-1 py-2 px-3 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-fire mr-1"></i> Medium
+                </button>
+                <button onclick="setDifficulty('advanced')" id="diff-advanced" class="diff-btn flex-1 py-2 px-3 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-crown mr-1"></i> Expert
+                </button>
+            </div>
+
+            <!-- Game Mode Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+                <!-- Mode 1: Scramble -->
+                <div onclick="startGame('scramble')" class="glass-card p-6 rounded-3xl cursor-pointer hover:border-indigo-500/50 hover:bg-slate-800/80 transition-all duration-300 group flex flex-col justify-between hover:-translate-y-1 shadow-xl">
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                            <i class="fa-solid fa-arrow-down-a-z"></i>
+                        </div>
+                        <h3 class="font-display font-bold text-xl text-white mb-2">Word Scramble</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">Susun kembali huruf-huruf acak menjadi kata yang benar dengan bantuan petunjuk.</p>
+                    </div>
+                    <div class="mt-6 flex items-center text-xs font-semibold text-indigo-400 group-hover:translate-x-1 transition-all">
+                        Mulai Bermain <i class="fa-solid fa-chevron-right ml-2"></i>
+                    </div>
+                </div>
+
+                <!-- Mode 2: Quiz -->
+                <div onclick="startGame('quiz')" class="glass-card p-6 rounded-3xl cursor-pointer hover:border-pink-500/50 hover:bg-slate-800/80 transition-all duration-300 group flex flex-col justify-between hover:-translate-y-1 shadow-xl">
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl bg-pink-500/20 text-pink-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 group-hover:bg-pink-500 group-hover:text-white transition-all">
+                            <i class="fa-solid fa-lightbulb"></i>
+                        </div>
+                        <h3 class="font-display font-bold text-xl text-white mb-2">Vocab Quiz</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">Pilih definisi atau lawan kata yang paling tepat dari pertanyaan bergambar/teks.</p>
+                    </div>
+                    <div class="mt-6 flex items-center text-xs font-semibold text-pink-400 group-hover:translate-x-1 transition-all">
+                        Mulai Bermain <i class="fa-solid fa-chevron-right ml-2"></i>
+                    </div>
+                </div>
+
+                <!-- Mode 3: Speed Match -->
+                <div onclick="startGame('match')" class="glass-card p-6 rounded-3xl cursor-pointer hover:border-emerald-500/50 hover:bg-slate-800/80 transition-all duration-300 group flex flex-col justify-between hover:-translate-y-1 shadow-xl">
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <h3 class="font-display font-bold text-xl text-white mb-2">Speed Match</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">Jodohkan kata Inggris dengan artinya dalam bahasa Indonesia secepat mungkin!</p>
+                    </div>
+                    <div class="mt-6 flex items-center text-xs font-semibold text-emerald-400 group-hover:translate-x-1 transition-all">
+                        Mulai Bermain <i class="fa-solid fa-chevron-right ml-2"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 2: GAMEPLAY CONTAINER -->
+        <section id="gameplay-screen" class="w-full hidden flex-col items-center">
+            
+            <!-- Game HUD (Timer, Score, Streak) -->
+            <div class="w-full glass-card p-4 rounded-2xl mb-6 flex items-center justify-between shadow-lg">
+                <button onclick="quitGame()" class="text-slate-400 hover:text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-arrow-left"></i> Keluar
+                </button>
+
+                <div class="flex items-center gap-4 sm:gap-6">
+                    <!-- Timer -->
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-clock text-cyan-400 text-sm"></i>
+                        <span id="game-timer" class="font-display font-bold text-lg text-cyan-400">30s</span>
+                    </div>
+
+                    <!-- Streak Combo -->
+                    <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-xl">
+                        <i class="fa-solid fa-fire text-amber-400 text-sm animate-bounce-short"></i>
+                        <span id="combo-count" class="font-bold text-xs sm:text-sm text-amber-300">0x Streak</span>
+                    </div>
+
+                    <!-- Session Score -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400 hidden sm:inline">Skor Sesi:</span>
+                        <span id="session-score" class="font-display font-extrabold text-lg text-indigo-400">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-800/60 h-2 rounded-full mb-6 overflow-hidden border border-slate-700/50">
+                <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 via-pink-500 to-emerald-400 h-full w-0 transition-all duration-300"></div>
+            </div>
+
+            <!-- GAME MODE 1: WORD SCRAMBLE INTERFACE -->
+            <div id="scramble-ui" class="w-full glass-card p-6 sm:p-8 rounded-3xl flex flex-col items-center gap-6 hidden">
+                <span class="text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">Word Scramble Mode</span>
+                
+                <div class="text-center">
+                    <p id="scramble-hint" class="text-slate-300 text-sm sm:text-base italic mb-1">"Petunjuk akan muncul di sini"</p>
+                    <span id="scramble-category" class="text-xs text-slate-500 uppercase tracking-widest font-bold">Category: General</span>
+                </div>
+
+                <!-- Scrambled Letter Tiles -->
+                <div id="scramble-letters-container" class="flex flex-wrap justify-center gap-2 sm:gap-3 my-2">
+                    <!-- Letter Buttons generated dynamically -->
+                </div>
+
+                <!-- User Answer Display -->
+                <div class="w-full max-w-md bg-slate-900/60 border-2 border-indigo-500/40 rounded-2xl p-4 flex items-center justify-between min-h-[64px]">
+                    <span id="scramble-answer" class="font-display font-bold text-2xl tracking-widest text-indigo-300 uppercase px-2"></span>
+                    <button onclick="clearScrambleAnswer()" class="text-slate-500 hover:text-slate-300 text-sm px-2">
+                        <i class="fa-solid fa-backspace text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="flex gap-3 w-full max-w-md">
+                    <button onclick="useHint()" id="hint-btn" class="glass-pill px-4 py-3 rounded-xl font-semibold text-xs sm:text-sm text-amber-300 hover:bg-amber-500/10 border border-amber-500/30 flex items-center gap-2 transition">
+                        <i class="fa-solid fa-lightbulb"></i> Petunjuk (-50 Skor)
+                    </button>
+                    <button onclick="submitScrambleAnswer()" class="flex-1 bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 font-bold text-sm text-white py-3 rounded-xl shadow-lg shadow-indigo-500/25 transition active:scale-95">
+                        Kirim Jawaban <i class="fa-solid fa-paper-plane ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- GAME MODE 2: VOCAB QUIZ INTERFACE -->
+            <div id="quiz-ui" class="w-full glass-card p-6 sm:p-8 rounded-3xl flex flex-col items-center gap-6 hidden">
+                <span class="text-xs font-semibold text-pink-400 bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20">Vocabulary Quiz</span>
+
+                <div class="text-center max-w-xl">
+                    <h3 id="quiz-question" class="text-xl sm:text-2xl font-display font-bold text-white mb-2">Apa arti kata "Resilient"?</h3>
+                    <p id="quiz-context" class="text-xs sm:text-sm text-slate-400 italic">"She is resilient despite facing many hardships."</p>
+                </div>
+
+                <!-- Multiple Choice Options -->
+                <div id="quiz-options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl mt-2">
+                    <!-- Dynamic option buttons -->
+                </div>
+            </div>
+
+            <!-- GAME MODE 3: SPEED MATCH INTERFACE -->
+            <div id="match-ui" class="w-full glass-card p-6 sm:p-8 rounded-3xl flex flex-col items-center gap-4 hidden">
+                <span class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">Speed Matching</span>
+                <p class="text-xs text-slate-400 text-center">Cocokkan pasangan kata Bahasa Inggris dan Terjemahannya!</p>
+
+                <!-- Grid Cards -->
+                <div id="match-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-2xl mt-2">
+                    <!-- Dynamic matching cards -->
+                </div>
+            </div>
+
+        </section>
+
+        <!-- SCREEN 3: RESULT & SUMMARY BADGE -->
+        <section id="result-screen" class="w-full max-w-lg hidden flex-col items-center animate-fade-in">
+            <div class="glass-card p-8 rounded-3xl w-full text-center flex flex-col items-center relative overflow-hidden shadow-2xl border border-slate-700/80">
+                
+                <!-- Background Accent Glow -->
+                <div class="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+                <!-- Badge Icon -->
+                <div id="badge-icon-bg" class="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-400 to-pink-500 flex items-center justify-center shadow-xl mb-4 animate-float">
+                    <i id="badge-icon" class="fa-solid fa-trophy text-4xl text-white"></i>
+                </div>
+
+                <h2 id="badge-title" class="font-display font-extrabold text-2xl sm:text-3xl text-white mb-1">Hebat Sekali!</h2>
+                <p id="badge-subtitle" class="text-xs sm:text-sm text-slate-400 mb-6">Kamu menyelesaikan tantangan dengan baik!</p>
+
+                <!-- Score Stats Table -->
+                <div class="w-full glass-pill rounded-2xl p-4 grid grid-cols-3 gap-2 mb-6">
+                    <div class="flex flex-col items-center">
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Total Skor</span>
+                        <span id="final-score" class="font-display font-extrabold text-xl text-indigo-400">0</span>
+                    </div>
+                    <div class="flex flex-col items-center border-x border-slate-700/50">
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Akurasi</span>
+                        <span id="final-accuracy" class="font-display font-extrabold text-xl text-emerald-400">0%</span>
+                    </div>
+                    <div class="flex f
