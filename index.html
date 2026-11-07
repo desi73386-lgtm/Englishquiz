@@ -1,3 +1,7 @@
+Claude
+
+
+Englishquest · HTML
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -40,7 +44,7 @@ button:focus-visible{outline:2px solid #a5b4fc;outline-offset:2px}
 </style>
 </head>
 <body class="font-sans antialiased flex flex-col justify-between min-h-screen p-3 sm:p-6 select-none">
-
+ 
 <header class="max-w-4xl mx-auto w-full flex justify-between items-center mb-4 sm:mb-6 glass-card p-3 sm:p-4 rounded-2xl shadow-xl">
   <div class="flex items-center gap-3 cursor-pointer" onclick="quitGame()">
     <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-xl shadow-lg">🎓</div>
@@ -54,9 +58,9 @@ button:focus-visible{outline:2px solid #a5b4fc;outline-offset:2px}
     <div class="glass-pill px-3 py-1.5 rounded-xl flex items-center gap-2"><span>🏆</span><span id="global-score" class="font-bold text-sm">0</span></div>
   </div>
 </header>
-
+ 
 <main class="max-w-4xl mx-auto w-full flex-grow flex flex-col justify-center items-center relative">
-
+ 
   <!-- MENU -->
   <section id="mode-select-screen" class="w-full flex flex-col items-center gap-6">
     <div class="text-center max-w-lg mb-2">
@@ -90,7 +94,7 @@ button:focus-visible{outline:2px solid #a5b4fc;outline-offset:2px}
       </button>
     </div>
   </section>
-
+ 
   <!-- GAMEPLAY -->
   <section id="gameplay-screen" class="w-full hidden flex-col items-center">
     <div class="w-full glass-card p-4 rounded-2xl mb-6 flex items-center justify-between shadow-lg">
@@ -104,7 +108,7 @@ button:focus-visible{outline:2px solid #a5b4fc;outline-offset:2px}
     <div class="w-full bg-slate-800/60 h-2 rounded-full mb-6 overflow-hidden border border-slate-700/50">
       <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 via-pink-500 to-emerald-400 h-full w-0 transition-all duration-300"></div>
     </div>
-
+ 
     <div id="scramble-ui" class="w-full glass-card p-6 sm:p-8 rounded-3xl flex-col items-center gap-6 hidden">
       <span class="text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">Word Scramble</span>
       <div class="text-center">
@@ -121,7 +125,7 @@ button:focus-visible{outline:2px solid #a5b4fc;outline-offset:2px}
         <button onclick="submitScrambleAnswer()" class="flex-1 bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 font-bold text-sm text-white py-3 rounded-xl shadow-lg active:scale-95 transition">Kirim jawaban</button>
       </div>
     </div>
-
+ 
     <div id="quiz-ui" class="w-full glass-card p-6 sm:p-8 rounded-3xl flex-col items-center gap-6 hidden">
       <span class="text-xs font-semibold text-pink-400 bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20">Vocabulary Quiz</span>
       <div class="text-center max-w-xl">
@@ -130,14 +134,14 @@ button:focus-visible{outline:2px solid #a5b4fc;outline-offset:2px}
       </div>
       <div id="quiz-options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl mt-2"></div>
     </div>
-
+ 
     <div id="match-ui" class="w-full glass-card p-6 sm:p-8 rounded-3xl flex-col items-center gap-4 hidden">
       <span class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">Speed Matching</span>
       <p class="text-xs text-slate-400 text-center">Cocokkan kata bahasa Inggris dengan terjemahannya.</p>
       <div id="match-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-2xl mt-2"></div>
     </div>
   </section>
-
+ 
   <!-- RESULT -->
   <section id="result-screen" class="w-full max-w-lg hidden flex-col items-center">
     <div class="glass-card p-8 rounded-3xl w-full text-center flex flex-col items-center relative overflow-hidden shadow-2xl">
@@ -156,9 +160,9 @@ button:focus-visible{outline:2px solid #a5b4fc;outline-offset:2px}
     </div>
   </section>
 </main>
-
+ 
 <footer class="max-w-4xl mx-auto w-full text-center text-xs text-slate-500 mt-6">EnglishQuest · latihan kosakata</footer>
-
+ 
 <script>
 // ---------- DATA: [english, indonesia, petunjuk, kategori, contoh kalimat] ----------
 const WORDS={
@@ -204,7 +208,7 @@ const S={diff:'beginner',mode:null,list:[],idx:0,score:0,streak:0,best:0,correct
 let globalScore=0, soundOn=true, actx=null;
 try{globalScore=parseInt(localStorage.getItem('eq_score'))||0}catch(e){}
 $('global-score').textContent=globalScore;
-
+ 
 // ---------- SOUND ----------
 function beep(f,d,type){
   if(!soundOn)return;
@@ -219,7 +223,7 @@ function beep(f,d,type){
 const sndOK=()=>{beep(660,.12);setTimeout(()=>beep(880,.15),110)};
 const sndBad=()=>beep(180,.3,'sawtooth');
 function toggleSound(){soundOn=!soundOn;$('sound-toggle').textContent=soundOn?'🔊':'🔇'}
-
+ 
 // ---------- NAVIGASI ----------
 function showScreen(id){
   ['mode-select-screen','gameplay-screen','result-screen'].forEach(s=>{
@@ -239,7 +243,7 @@ function setDifficulty(d){
   $('diff-'+d).classList.add('active');
 }
 function quitGame(){stopTimer();showScreen('mode-select-screen')}
-
+ 
 // ---------- TIMER & HUD ----------
 function stopTimer(){clearInterval(S.timer);S.timer=null}
 function startTimer(sec,onEnd){
@@ -264,7 +268,7 @@ function markRight(bonus){
   addScore(100+bonus+Math.min(S.streak,10)*10);sndOK();
 }
 function markWrong(){S.streak=0;sndBad();renderHUD()}
-
+ 
 // ---------- MULAI GAME ----------
 function startGame(mode){
   S.mode=mode;S.idx=0;S.score=0;S.streak=0;S.best=0;S.correct=0;S.total=0;S.locked=false;
@@ -281,7 +285,7 @@ function advance(delay){
   S.locked=true;stopTimer();S.idx++;
   setTimeout(nextQuestion,delay);
 }
-
+ 
 // ---------- MODE 1: SCRAMBLE ----------
 function scrambleWord(w){
   let s=w;for(let i=0;i<10&&s===w;i++)s=shuffle(w.split('')).join('');
@@ -347,7 +351,7 @@ function submitScrambleAnswer(){
   }
 }
 function shakeEl(el){el.classList.remove('animate-shake');void el.offsetWidth;el.classList.add('animate-shake')}
-
+ 
 // ---------- MODE 2: QUIZ ----------
 function loadQuiz(){
   showUI('quiz-ui');
@@ -379,7 +383,7 @@ function answerQuiz(btn,val){
   if(ok){markRight(S.time*2)}else{markWrong();btn.classList.add('wrong')}
   revealQuiz();advance(ok?900:1500);
 }
-
+ 
 // ---------- MODE 3: SPEED MATCH ----------
 function startMatch(){
   showUI('match-ui');
@@ -409,7 +413,7 @@ function pickMatch(btn,c){
     [first.btn,btn].forEach(b=>{b.classList.add('animate-shake');setTimeout(()=>b.classList.remove('animate-shake','selected'),420)});
   }
 }
-
+ 
 // ---------- HASIL ----------
 function finishGame(){
   stopTimer();setProgress(100);
@@ -425,9 +429,11 @@ function finishGame(){
   showScreen('result-screen');
   if(acc>=70&&window.confetti){try{confetti({particleCount:140,spread:80,origin:{y:.6}})}catch(e){}}
 }
-
+ 
 setDifficulty('beginner');
 showScreen('mode-select-screen');
 </script>
 </body>
 </html>
+ 
+Claude finished the response
