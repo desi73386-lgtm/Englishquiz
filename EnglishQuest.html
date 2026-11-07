@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EnglishQuest: English Master</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+tailwind.config={theme:{extend:{fontFamily:{sans:['Plus Jakarta Sans','sans-serif'],display:['Outfit','sans-serif']}}}}
+</script>
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#311042 100%);min-height:100vh;color:#f8fafc;background-attachment:fixed}
+.glass-card{background:rgba(30,41,59,.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1)}
+.glass-pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15)}
+.gradient-text{background:linear-gradient(135deg,#a5b4fc,#f472b6,#38bdf8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.diff-btn.active{background:linear-gradient(135deg,#6366f1,#ec4899);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,.4)}
+.match-card{transition:all .2s;border:2px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06)}
+.match-card:hover{transform:translateY(-2px)}
+.match-card.selected{border-color:#f59e0b;box-shadow:0 0 15px rgba(245,158,11,.4);background:rgba(245,158,11,.15)}
+.match-card.matched{opacity:.3;pointer-events:none;transform:scale(.95)}
+.opt{border:2px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);transition:all .15s}
+.opt:hover:not(:disabled){border-color:#ec4899;background:rgba(236,72,153,.12)}
+.opt.right{border-color:#10b981;background:rgba(16,185,129,.25)}
+.opt.wrong{border-color:#ef4444;background:rgba(239,68,68,.25)}
+.tile{width:46px;height:52px;border-radius:12px;background:rgba(99,102,241,.25);border:2px solid rgba(99,102,241,.6);font:800 22px Outfit,sans-serif;text-transform:uppercase;transition:all .15s}
+.tile:hover:not(:disabled){background:#6366f1}
+.tile:disabled{opacity:.25}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.animate-shake{animation:shake .4s}
+@keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.float{animation:fl 3s ease-in-out infinite}
+.hidden{display:none!important}
+button:focus-visible{outline:2px solid #a5b4fc;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.float,.animate-shake{animation:none}}
+</style>
+</head>
+<body class="font-sans antialiased flex flex-col justify-between min-h-screen p-3 sm:p-6 select-none">
+
+<header class="max-w-4xl mx-auto w-full flex justify-between items-center mb-4 sm:mb-6 glass-card p-3 sm:p-4 rounded-2xl shadow-xl">
+  <div class="flex items-center gap-3 cursor-pointer" onclick="quitGame()">
+    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-xl shadow-lg">🎓</div>
+    <div>
+      <h1 class="font-display font-extrabold text-lg sm:text-xl tracking-wide gradient-text">EnglishQuest</h1>
+      <p class="text-xs text-slate-400 font-medium">English Vocabulary Master</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2 sm:gap-4">
+    <button id="sound-toggle" onclick="toggleSound()" aria-label="Suara" class="glass-pill w-10 h-10 rounded-xl flex items-center justify-center text-lg">🔊</button>
+    <div class="glass-pill px-3 py-1.5 rounded-xl flex items-center gap-2"><span>🏆</span><span id="global-score" class="font-bold text-sm">0</span></div>
+  </div>
+</header>
+
+<main class="max-w-4xl mx-auto w-full flex-grow flex flex-col justify-center items-center relative">
+
+  <!-- MENU -->
+  <section id="mode-select-screen" class="w-full flex flex-col items-center gap-6">
+    <div class="text-center max-w-lg mb-2">
+      <span class="px-3 py-1 text-xs font-semibold text-indigo-300 bg-indigo-500/20 rounded-full border border-indigo-500/30">Latih bahasa Inggrismu</span>
+      <h2 class="text-3xl sm:text-5xl font-display font-extrabold mt-3 mb-2">Pilih mode game</h2>
+      <p class="text-sm sm:text-base text-slate-400">Tingkatkan kosakata dan kecepatan berpikirmu.</p>
+    </div>
+    <div class="glass-card p-2 rounded-2xl flex gap-2 w-full max-w-md border border-slate-700/50">
+      <button onclick="setDifficulty('beginner')" id="diff-beginner" class="diff-btn flex-1 py-2 px-3 rounded-xl font-semibold text-xs sm:text-sm text-slate-400 transition">🌱 Beginner</button>
+      <button onclick="setDifficulty('intermediate')" id="diff-intermediate" class="diff-btn flex-1 py-2 px-3 rounded-xl font-semibold text-xs sm:text-sm text-slate-400 transition">🔥 Medium</button>
+      <button onclick="setDifficulty('advanced')" id="diff-advanced" class="diff-btn flex-1 py-2 px-3 rounded-xl font-semibold text-xs sm:text-sm text-slate-400 transition">👑 Expert</button>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+      <button onclick="startGame('scramble')" class="glass-card p-6 rounded-3xl text-left hover:border-indigo-500/60 hover:-translate-y-1 transition shadow-xl">
+        <div class="w-14 h-14 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-2xl mb-4">🔤</div>
+        <h3 class="font-display font-bold text-xl mb-2">Word Scramble</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">Susun huruf acak menjadi kata yang benar dengan bantuan petunjuk.</p>
+        <p class="mt-5 text-xs font-semibold text-indigo-400">Mulai bermain ›</p>
+      </button>
+      <button onclick="startGame('quiz')" class="glass-card p-6 rounded-3xl text-left hover:border-pink-500/60 hover:-translate-y-1 transition shadow-xl">
+        <div class="w-14 h-14 rounded-2xl bg-pink-500/20 flex items-center justify-center text-2xl mb-4">💡</div>
+        <h3 class="font-display font-bold text-xl mb-2">Vocab Quiz</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">Pilih arti kata yang paling tepat dari contoh kalimat.</p>
+        <p class="mt-5 text-xs font-semibold text-pink-400">Mulai bermain ›</p>
+      </button>
+      <button onclick="startGame('match')" class="glass-card p-6 rounded-3xl text-left hover:border-emerald-500/60 hover:-translate-y-1 transition shadow-xl">
+        <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-2xl mb-4">⚡</div>
+        <h3 class="font-display font-bold text-xl mb-2">Speed Match</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">Jodohkan kata Inggris dengan artinya dalam bahasa Indonesia secepat mungkin.</p>
+        <p class="mt-5 text-xs font-semibold text-emerald-400">Mulai bermain ›</p>
+      </button>
+    </div>
+  </section>
+
+  <!-- GAMEPLAY -->
+  <section id="gameplay-screen" class="w-full hidden flex-col items-center">
+    <div class="w-full glass-card p-4 rounded-2xl mb-6 flex items-center justify-between shadow-lg">
+      <button onclick="quitGame()" class="text-slate-400 hover:text-white text-xs sm:text-sm font-semibold">← Keluar</button>
+      <div class="flex items-center gap-3 sm:gap-6">
+        <div class="flex items-center gap-2"><span>⏱️</span><span id="game-timer" class="font-display font-bold text-lg text-cyan-400">30s</span></div>
+        <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-xl"><span>🔥</span><span id="combo-count" class="font-bold text-xs sm:text-sm text-amber-300">0x Streak</span></div>
+        <div class="flex items-center gap-2"><span class="text-xs text-slate-400 hidden sm:inline">Skor sesi:</span><span id="session-score" class="font-display font-extrabold text-lg text-indigo-400">0</span></div>
+      </div>
+    </div>
+    <div class="w-full bg-slate-800/60 h-2 rounded-full mb-6 overflow-hidden border border-slate-700/50">
+      <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 via-pink-500 to-emerald-400 h-full w-0 transition-all duration-300"></div>
+    </div>
+
+    <div id="scramble-ui" class="w-full glass-card p-6 sm:p-8 rounded-3xl flex-col items-center gap-6 hidden">
+      <span class="text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">Word Scramble</span>
+      <div class="text-center">
+        <p id="scramble-hint" class="text-slate-300 text-sm sm:text-base italic mb-1"></p>
+        <span id="scramble-category" class="text-xs text-slate-500 font-bold"></span>
+      </div>
+      <div id="scramble-letters-container" class="flex flex-wrap justify-center gap-2 sm:gap-3 my-2"></div>
+      <div class="w-full max-w-md bg-slate-900/60 border-2 border-indigo-500/40 rounded-2xl p-4 flex items-center justify-between min-h-[64px]">
+        <span id="scramble-answer" class="font-display font-bold text-2xl tracking-widest text-indigo-300 uppercase px-2"></span>
+        <button onclick="clearScrambleAnswer()" aria-label="Hapus huruf" class="text-slate-400 hover:text-white text-xl px-2">⌫</button>
+      </div>
+      <div class="flex gap-3 w-full max-w-md">
+        <button onclick="useHint()" id="hint-btn" class="glass-pill px-4 py-3 rounded-xl font-semibold text-xs sm:text-sm text-amber-300 border border-amber-500/30">💡 Petunjuk (−50)</button>
+        <button onclick="submitScrambleAnswer()" class="flex-1 bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 font-bold text-sm text-white py-3 rounded-xl shadow-lg active:scale-95 transition">Kirim jawaban</button>
+      </div>
+    </div>
+
+    <div id="quiz-ui" class="w-full glass-card p-6 sm:p-8 rounded-3xl flex-col items-center gap-6 hidden">
+      <span class="text-xs font-semibold text-pink-400 bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20">Vocabulary Quiz</span>
+      <div class="text-center max-w-xl">
+        <h3 id="quiz-question" class="text-xl sm:text-2xl font-display font-bold mb-2"></h3>
+        <p id="quiz-context" class="text-xs sm:text-sm text-slate-400 italic"></p>
+      </div>
+      <div id="quiz-options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl mt-2"></div>
+    </div>
+
+    <div id="match-ui" class="w-full glass-card p-6 sm:p-8 rounded-3xl flex-col items-center gap-4 hidden">
+      <span class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">Speed Matching</span>
+      <p class="text-xs text-slate-400 text-center">Cocokkan kata bahasa Inggris dengan terjemahannya.</p>
+      <div id="match-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-2xl mt-2"></div>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section id="result-screen" class="w-full max-w-lg hidden flex-col items-center">
+    <div class="glass-card p-8 rounded-3xl w-full text-center flex flex-col items-center relative overflow-hidden shadow-2xl">
+      <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-400 to-pink-500 flex items-center justify-center shadow-xl mb-4 float"><span id="badge-icon" class="text-4xl">🏆</span></div>
+      <h2 id="badge-title" class="font-display font-extrabold text-2xl sm:text-3xl mb-1">Hebat sekali!</h2>
+      <p id="badge-subtitle" class="text-xs sm:text-sm text-slate-400 mb-6"></p>
+      <div class="w-full glass-pill rounded-2xl p-4 grid grid-cols-3 gap-2 mb-6">
+        <div class="flex flex-col items-center"><span class="text-[10px] text-slate-400 font-semibold">Total skor</span><span id="final-score" class="font-display font-extrabold text-xl text-indigo-400">0</span></div>
+        <div class="flex flex-col items-center border-x border-slate-700/50"><span class="text-[10px] text-slate-400 font-semibold">Akurasi</span><span id="final-accuracy" class="font-display font-extrabold text-xl text-emerald-400">0%</span></div>
+        <div class="flex flex-col items-center"><span class="text-[10px] text-slate-400 font-semibold">Streak terbaik</span><span id="final-streak" class="font-display font-extrabold text-xl text-amber-400">0</span></div>
+      </div>
+      <div class="flex gap-3 w-full">
+        <button onclick="quitGame()" class="glass-pill flex-1 py-3 rounded-xl font-semibold text-sm">Menu</button>
+        <button onclick="startGame(S.mode)" class="flex-1 bg-gradient-to-r from-indigo-600 to-pink-600 font-bold text-sm py-3 rounded-xl shadow-lg active:scale-95 transition">Main lagi</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="max-w-4xl mx-auto w-full text-center text-xs text-slate-500 mt-6">EnglishQuest · latihan kosakata</footer>
+
+<script>
+// ---------- DATA: [english, indonesia, petunjuk, kategori, contoh kalimat] ----------
+const WORDS={
+beginner:[
+['apple','apel','Buah merah atau hijau yang renyah','Food','I eat an apple every morning.'],
+['house','rumah','Tempat kamu tinggal','Place','Their house is near the park.'],
+['water','air','Kamu minum ini setiap hari','Daily','Please drink more water.'],
+['book','buku','Kamu membacanya','Object','This book is very interesting.'],
+['happy','senang','Perasaan gembira','Feeling','She is happy today.'],
+['friend','teman','Orang yang dekat denganmu','People','He is my best friend.'],
+['school','sekolah','Tempat belajar murid','Place','We go to school by bus.'],
+['green','hijau','Warna daun','Color','The grass is green.'],
+['market','pasar','Tempat jual beli sayur','Place','Mom buys fruit at the market.'],
+['window','jendela','Kaca di dinding rumah','Object','Please open the window.']],
+intermediate:[
+['journey','perjalanan','Bepergian dari satu tempat ke tempat lain','Travel','The journey took five hours.'],
+['borrow','meminjam','Mengambil sementara lalu dikembalikan','Action','Can I borrow your pen?'],
+['honest','jujur','Selalu berkata benar','Character','He is an honest person.'],
+['crowded','ramai','Penuh dengan orang','Describe','The train was crowded.'],
+['improve','memperbaiki','Membuat menjadi lebih baik','Action','I want to improve my English.'],
+['delicious','lezat','Rasa makanan yang sangat enak','Food','The soup is delicious.'],
+['neighbor','tetangga','Orang yang tinggal di sebelah rumah','People','Our neighbor is very kind.'],
+['believe','percaya','Yakin bahwa sesuatu itu benar','Mind','I believe you can do it.'],
+['popular','terkenal','Disukai banyak orang','Describe','This song is very popular.'],
+['environment','lingkungan','Alam di sekitar kita','Nature','We must protect the environment.']],
+advanced:[
+['resilient','tangguh','Cepat pulih dari kesulitan','Character','She is resilient despite many hardships.'],
+['ambiguous','ambigu','Bisa diartikan lebih dari satu cara','Language','His answer was ambiguous.'],
+['meticulous','teliti','Sangat memperhatikan detail','Character','He is meticulous about his work.'],
+['reluctant','enggan','Tidak mau melakukan sesuatu','Feeling','She was reluctant to speak.'],
+['inevitable','tak terhindarkan','Pasti terjadi','Abstract','Change is inevitable.'],
+['eloquent','fasih','Pandai berbicara dengan indah','Language','The speaker was eloquent.'],
+['scarce','langka','Jumlahnya sangat sedikit','Describe','Water is scarce in the desert.'],
+['persuade','membujuk','Meyakinkan orang agar setuju','Action','He tried to persuade her to stay.'],
+['pragmatic','pragmatis','Berpikir praktis dan realistis','Mind','We need a pragmatic solution.'],
+['vulnerable','rentan','Mudah terluka atau diserang','Abstract','Children are vulnerable to disease.']]
+};
+const MODE_NAME={scramble:'Word Scramble',quiz:'Vocab Quiz',match:'Speed Match'};
+const ROUNDS=8, Q_TIME=30, M_TIME=60;
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const S={diff:'beginner',mode:null,list:[],idx:0,score:0,streak:0,best:0,correct:0,total:0,time:0,timer:null,locked:false,hintUsed:false,answer:[],tiles:[]};
+let globalScore=0, soundOn=true, actx=null;
+try{globalScore=parseInt(localStorage.getItem('eq_score'))||0}catch(e){}
+$('global-score').textContent=globalScore;
+
+// ---------- SOUND ----------
+function beep(f,d,type){
+  if(!soundOn)return;
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type||'sine';o.frequency.value=f;g.gain.value=.08;
+    o.connect(g);g.connect(actx.destination);o.start();
+    g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d);o.stop(actx.currentTime+d);
+  }catch(e){}
+}
+const sndOK=()=>{beep(660,.12);setTimeout(()=>beep(880,.15),110)};
+const sndBad=()=>beep(180,.3,'sawtooth');
+function toggleSound(){soundOn=!soundOn;$('sound-toggle').textContent=soundOn?'🔊':'🔇'}
+
+// ---------- NAVIGASI ----------
+function showScreen(id){
+  ['mode-select-screen','gameplay-screen','result-screen'].forEach(s=>{
+    const el=$(s);const on=s===id;
+    el.classList.toggle('hidden',!on);el.classList.toggle('flex',on);
+  });
+}
+function showUI(id){
+  ['scramble-ui','quiz-ui','match-ui'].forEach(u=>{
+    const el=$(u);const on=u===id;
+    el.classList.toggle('hidden',!on);el.classList.toggle('flex',on);
+  });
+}
+function setDifficulty(d){
+  S.diff=d;
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('active'));
+  $('diff-'+d).classList.add('active');
+}
+function quitGame(){stopTimer();showScreen('mode-select-screen')}
+
+// ---------- TIMER & HUD ----------
+function stopTimer(){clearInterval(S.timer);S.timer=null}
+function startTimer(sec,onEnd){
+  stopTimer();S.time=sec;renderTime();
+  S.timer=setInterval(()=>{
+    S.time--;renderTime();
+    if(S.time<=0){stopTimer();onEnd()}
+  },1000);
+}
+function renderTime(){
+  const t=$('game-timer');t.textContent=Math.max(S.time,0)+'s';
+  t.className='font-display font-bold text-lg '+(S.time<=5?'text-red-400':'text-cyan-400');
+}
+function renderHUD(){
+  $('session-score').textContent=S.score;
+  $('combo-count').textContent=S.streak+'x Streak';
+}
+function setProgress(p){$('progress-bar').style.width=Math.min(100,p)+'%'}
+function addScore(n){S.score=Math.max(0,S.score+n);renderHUD()}
+function markRight(bonus){
+  S.correct++;S.streak++;S.best=Math.max(S.best,S.streak);
+  addScore(100+bonus+Math.min(S.streak,10)*10);sndOK();
+}
+function markWrong(){S.streak=0;sndBad();renderHUD()}
+
+// ---------- MULAI GAME ----------
+function startGame(mode){
+  S.mode=mode;S.idx=0;S.score=0;S.streak=0;S.best=0;S.correct=0;S.total=0;S.locked=false;
+  S.list=shuffle(WORDS[S.diff]).slice(0,ROUNDS);
+  renderHUD();setProgress(0);showScreen('gameplay-screen');
+  if(mode==='match')startMatch();else nextQuestion();
+}
+function nextQuestion(){
+  if(S.idx>=S.list.length)return finishGame();
+  S.locked=false;setProgress(S.idx/S.list.length*100);
+  if(S.mode==='scramble')loadScramble();else loadQuiz();
+}
+function advance(delay){
+  S.locked=true;stopTimer();S.idx++;
+  setTimeout(nextQuestion,delay);
+}
+
+// ---------- MODE 1: SCRAMBLE ----------
+function scrambleWord(w){
+  let s=w;for(let i=0;i<10&&s===w;i++)s=shuffle(w.split('')).join('');
+  return s;
+}
+function loadScramble(){
+  showUI('scramble-ui');
+  const w=S.list[S.idx];
+  S.hintUsed=false;S.answer=[];
+  $('hint-btn').disabled=false;$('hint-btn').classList.remove('opacity-40');
+  $('scramble-hint').textContent='“'+w[2]+' · '+w[0].length+' huruf”';
+  $('scramble-category').textContent='Kategori: '+w[3];
+  const box=$('scramble-letters-container');box.innerHTML='';
+  S.tiles=scrambleWord(w[0]).split('').map((ch,i)=>{
+    const b=document.createElement('button');
+    b.className='tile';b.textContent=ch;b.onclick=()=>pickTile(i);
+    box.appendChild(b);return{ch,used:false,el:b};
+  });
+  renderAnswer();
+  startTimer(Q_TIME,()=>{
+    if(S.locked)return;S.total++;markWrong();
+    $('scramble-answer').textContent=S.list[S.idx][0];
+    $('scramble-answer').classList.add('text-red-400');
+    advance(1400);
+  });
+}
+function renderAnswer(){
+  const a=$('scramble-answer');a.classList.remove('text-red-400');
+  a.textContent=S.answer.map(i=>S.tiles[i].ch).join('');
+}
+function pickTile(i){
+  if(S.locked||S.tiles[i].used)return;
+  S.tiles[i].used=true;S.tiles[i].el.disabled=true;S.answer.push(i);
+  beep(440,.05);renderAnswer();
+}
+function clearScrambleAnswer(){
+  if(S.locked||!S.answer.length)return;
+  const i=S.answer.pop();S.tiles[i].used=false;S.tiles[i].el.disabled=false;renderAnswer();
+}
+function useHint(){
+  if(S.locked||S.hintUsed)return;
+  S.hintUsed=true;addScore(-50);
+  const w=S.list[S.idx];
+  $('scramble-hint').textContent='“'+w[2]+' · '+w[0].length+' huruf · diawali “'+w[0][0].toUpperCase()+'””';
+  $('hint-btn').disabled=true;$('hint-btn').classList.add('opacity-40');
+}
+function submitScrambleAnswer(){
+  if(S.locked)return;
+  const w=S.list[S.idx][0];
+  const guess=S.answer.map(i=>S.tiles[i].ch).join('');
+  if(guess.length<w.length)return shakeEl($('scramble-answer').parentElement);
+  S.total++;
+  if(guess===w){
+    markRight(S.time*2);
+    $('scramble-answer').classList.add('text-emerald-400');
+    advance(900);
+  }else{
+    markWrong();
+    shakeEl($('scramble-answer').parentElement);
+    // reset agar bisa dicoba lagi hingga waktu habis
+    S.total--;S.total++;
+    while(S.answer.length)clearScrambleAnswer();
+  }
+}
+function shakeEl(el){el.classList.remove('animate-shake');void el.offsetWidth;el.classList.add('animate-shake')}
+
+// ---------- MODE 2: QUIZ ----------
+function loadQuiz(){
+  showUI('quiz-ui');
+  const w=S.list[S.idx];
+  $('quiz-question').textContent='Apa arti kata “'+w[0]+'”?';
+  $('quiz-context').textContent='“'+w[4]+'”';
+  const pool=WORDS[S.diff].filter(x=>x[0]!==w[0]).map(x=>x[1]);
+  const opts=shuffle([w[1],...shuffle(pool).slice(0,3)]);
+  const box=$('quiz-options-container');box.innerHTML='';
+  opts.forEach(o=>{
+    const b=document.createElement('button');
+    b.className='opt p-4 rounded-2xl font-semibold text-sm sm:text-base';
+    b.textContent=o;b.onclick=()=>answerQuiz(b,o);box.appendChild(b);
+  });
+  startTimer(Q_TIME,()=>{
+    if(S.locked)return;S.total++;markWrong();revealQuiz();advance(1400);
+  });
+}
+function revealQuiz(){
+  const ans=S.list[S.idx][1];
+  document.querySelectorAll('#quiz-options-container .opt').forEach(b=>{
+    b.disabled=true;if(b.textContent===ans)b.classList.add('right');
+  });
+}
+function answerQuiz(btn,val){
+  if(S.locked)return;
+  S.total++;
+  const ok=val===S.list[S.idx][1];
+  if(ok){markRight(S.time*2)}else{markWrong();btn.classList.add('wrong')}
+  revealQuiz();advance(ok?900:1500);
+}
+
+// ---------- MODE 3: SPEED MATCH ----------
+function startMatch(){
+  showUI('match-ui');
+  const pairs=S.list.slice(0,6);
+  S.pairsLeft=pairs.length;S.sel=null;S.mistakes=0;S.matchTotal=pairs.length;
+  const cards=shuffle(pairs.flatMap(p=>[{k:p[0],t:p[0],l:'en'},{k:p[0],t:p[1],l:'id'}]));
+  const grid=$('match-grid');grid.innerHTML='';
+  cards.forEach(c=>{
+    const b=document.createElement('button');
+    b.className='match-card p-3 sm:p-4 rounded-2xl font-semibold text-sm min-h-[64px]';
+    b.textContent=c.t;b.onclick=()=>pickMatch(b,c);grid.appendChild(b);
+  });
+  startTimer(M_TIME,finishGame);
+}
+function pickMatch(btn,c){
+  if(btn.classList.contains('matched'))return;
+  if(!S.sel){S.sel={btn,c};btn.classList.add('selected');beep(440,.05);return}
+  if(S.sel.btn===btn){btn.classList.remove('selected');S.sel=null;return}
+  const first=S.sel;S.sel=null;
+  if(first.c.k===c.k&&first.c.l!==c.l){
+    [first.btn,btn].forEach(b=>{b.classList.remove('selected');b.classList.add('matched')});
+    S.pairsLeft--;markRight(0);
+    setProgress((S.matchTotal-S.pairsLeft)/S.matchTotal*100);
+    if(S.pairsLeft===0){stopTimer();S.timeBonus=S.time*5;addScore(S.timeBonus);setTimeout(finishGame,500)}
+  }else{
+    S.mistakes++;markWrong();
+    [first.btn,btn].forEach(b=>{b.classList.add('animate-shake');setTimeout(()=>b.classList.remove('animate-shake','selected'),420)});
+  }
+}
+
+// ---------- HASIL ----------
+function finishGame(){
+  stopTimer();setProgress(100);
+  let acc;
+  if(S.mode==='match'){const done=S.matchTotal-S.pairsLeft;acc=done+S.mistakes?Math.round(done/(done+S.mistakes)*100):0}
+  else acc=S.total?Math.round(S.correct/S.total*100):0;
+  globalScore+=S.score;$('global-score').textContent=globalScore;
+  try{localStorage.setItem('eq_score',globalScore)}catch(e){}
+  const tiers=acc>=90?['🏆','Luar biasa!']:acc>=70?['🥇','Hebat sekali!']:acc>=40?['👍','Bagus, terus berlatih!']:['💪','Ayo coba lagi!'];
+  $('badge-icon').textContent=tiers[0];$('badge-title').textContent=tiers[1];
+  $('badge-subtitle').textContent=MODE_NAME[S.mode]+' · level '+S.diff;
+  $('final-score').textContent=S.score;$('final-accuracy').textContent=acc+'%';$('final-streak').textContent=S.best;
+  showScreen('result-screen');
+  if(acc>=70&&window.confetti){try{confetti({particleCount:140,spread:80,origin:{y:.6}})}catch(e){}}
+}
+
+setDifficulty('beginner');
+showScreen('mode-select-screen');
+</script>
+</body>
+</html>
